@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>TFG · Sistema de Control de Parking</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body id="body">
+
+
+<!-- =========================
+     HEADER
+========================= -->
+<header class="control-header">
+
+    <div class="header-left">
+
+        <img src="{{ url_for('static', filename='logo.png') }}"
+             class="logo"
+             alt="logo instituto">
+
+        <div class="title-block">
+
+            <h1>Centro de Control de Accesos</h1>
+            <p>Sistema de monitorización de vehículos</p>
+
+        </div>
+
+    </div>
+
+
+    <div class="header-center">
+
+        <div class="status-box">
+            <span class="dot"></span>
+            SISTEMA EN VIGILANCIA
+        </div>
+
+        <div class="clock" id="clock">--:--:--</div>
+
+    </div>
+
+
+    <div class="header-right">
+
+        <button onclick="toggleTheme()" class="theme-btn">
+            🌙 / ☀️
+        </button>
+
+    </div>
+
+</header>
+
+
+<!-- =========================
+     CONTENIDO
+========================= -->
+<main class="container">
+    {% block content %}{% endblock %}
+</main>
+
+
+<!-- =========================
+     SCRIPTS
+========================= -->
+<script>
+
+function updateClock(){
+    const now = new Date();
+
+    document.getElementById("clock").innerText =
+        String(now.getHours()).padStart(2,'0') + ":" +
+        String(now.getMinutes()).padStart(2,'0') + ":" +
+        String(now.getSeconds()).padStart(2,'0');
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+
+
+function toggleTheme(){
+    document.body.classList.toggle("light");
+}
+
+</script>
+
+</body>
+</html>

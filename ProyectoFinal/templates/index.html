@@ -1,0 +1,255 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<!-- =========================
+     HEADER PRINCIPAL
+========================= -->
+<div class="dashboard-header">
+
+    <div>
+        <h1>Centro de Control de Accesos</h1>
+        <p>Proyecto TFG - Sistema de reconocimiento de matrículas</p>
+    </div>
+
+    <div class="system-status">
+        <span class="dot"></span>
+        SISTEMA ACTIVO
+    </div>
+
+</div>
+
+
+<!-- =========================
+     ALERTA LISTA NEGRA
+========================= -->
+{% if alertas_negra > 0 %}
+
+<div class="alert-box">
+    🚨 ALERTA CRÍTICA: {{ alertas_negra }} vehículo(s) detectado(s) en LISTA NEGRA
+</div>
+
+<audio autoplay>
+    <source src="{{ url_for('static', filename='alarm.mp3') }}" type="audio/mpeg">
+</audio>
+
+{% endif %}
+
+
+<!-- =========================
+     CARDS
+========================= -->
+<div class="cards">
+
+    <div class="card">
+        <h3>🚘 Vehículos activos</h3>
+        <p class="big-number">{{ activos }}</p>
+        <span>En el sistema actualmente</span>
+    </div>
+
+    <div class="card">
+        <h3>📊 Registros totales</h3>
+        <p class="big-number">{{ total }}</p>
+        <span>Histórico completo</span>
+    </div>
+
+</div>
+
+
+<!-- =========================
+     📊 GRÁFICO
+========================= -->
+<div class="dashboard-grid">
+
+    <!-- 📊 GRAFICO -->
+    <div class="chart-panel">
+
+        <div class="chart-header">
+            <h2>📊 Centro de análisis de actividad</h2>
+            <p>Vehículos por día (última semana)</p>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="grafico"></canvas>
+        </div>
+
+    </div>
+
+
+    <!-- 🚨 ALERTAS LISTA NEGRA -->
+    <div class="alert-panel">
+
+        <div class="alert-header">
+            <h2>🚨 Lista Negra</h2>
+            <p>Vehículos detectados en vigilancia</p>
+        </div>
+
+        <div class="alert-body">
+
+            {% if alertas_negra > 0 %}
+
+                {% for coche in coches %}
+                    {% if coche[2] in negra %}
+
+                        <div class="alert-item">
+                            <span class="plate">🚨 {{ coche[2] }}</span>
+                            <span class="time">{{ coche[3] }}</span>
+                        </div>
+
+                    {% endif %}
+                {% endfor %}
+
+            {% else %}
+
+                <div class="no-alerts">
+                    ✅ Sin incidencias detectadas
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     BOTONES
+========================= -->
+<div class="buttons">
+
+    <a href="/descargar_txt" class="btn">📄 Exportar TXT</a>
+
+    <a href="/descargar_pdf" class="btn">📑 Informe general</a>
+
+    <a href="/descargar_incidencias" class="btn danger">🚨 Incidencias seguridad</a>
+
+    <a href="/vaciar" class="btn danger">🗑 Limpiar sistema</a>
+    <a href="/enviar_email" class="btn"> 📧 Enviar informe por correo   </a>
+    
+</div>
+
+
+<!-- =========================
+     BUSCADOR
+========================= -->
+<input
+    type="text"
+    id="buscar"
+    placeholder="Buscar matrícula..."
+    onkeyup="buscarMatricula()"
+    class="search"
+/>
+
+
+<!-- =========================
+     TABLA
+========================= -->
+<div class="table-section">
+
+    <div class="table-header">
+        <h2>Registro de vehículos</h2>
+    </div>
+
+    <table id="tabla">
+
+        <tr>
+            <th>ID</th>
+            <th>TRACK ID</th>
+            <th>MATRÍCULA</th>
+            <th>ENTRADA</th>
+            <th>ESTADO</th>
+        </tr>
+
+        {% for coche in coches %}
+        <tr>
+
+            <td>{{ coche[0] }}</td>
+            <td>{{ coche[1] }}</td>
+            <td class="plate">{{ coche[2] }}</td>
+            <td>{{ coche[3] }}</td>
+
+            <td>
+
+                {% if coche[2] in negra %}
+                    <span class="status-danger">🚨 LISTA NEGRA</span>
+
+                {% elif coche[4] %}
+                    <span class="status-out">SALIDA</span>
+
+                {% else %}
+                    <span class="status-in">EN PARKING</span>
+                {% endif %}
+
+            </td>
+
+        </tr>
+        {% endfor %}
+
+    </table>
+
+</div>
+
+
+<!-- =========================
+     JS: BUSCADOR + GRÁFICO
+========================= -->
+
+<script>
+function buscarMatricula() {
+
+    let filtro = document.getElementById("buscar").value.toUpperCase();
+    let filas = document.getElementById("tabla").getElementsByTagName("tr");
+
+    for (let i = 1; i < filas.length; i++) {
+
+        let td = filas[i].getElementsByTagName("td")[2];
+
+        if (td) {
+            let txt = td.textContent || td.innerText;
+
+            filas[i].style.display =
+                txt.toUpperCase().includes(filtro)
+                ? ""
+                : "none";
+        }
+    }
+}
+</script>
+
+
+<!-- =========================
+     📊 CHART.JS
+========================= -->
+<script>
+
+const labels = JSON.parse('{{ fechas | tojson | safe }}');
+const dataValues = JSON.parse('{{ valores | tojson | safe }}');
+
+const ctx = document.getElementById('grafico');
+
+if (ctx) {
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Vehículos por día',
+                data: dataValues,
+                backgroundColor: '#2563eb'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+}
+
+</script>
+
+{% endblock %}
